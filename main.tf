@@ -85,6 +85,13 @@ resource "google_monitoring_alert_policy" "vm_instance_down_alert" {
     }
   }
 
+
+  alert_strategy {
+    notification_rate_limit {
+      period = "180s"
+    }
+  }
+
   notification_channels = [
     for channel in google_monitoring_notification_channel.email_notification : channel.id
   ]
@@ -98,6 +105,11 @@ resource "google_monitoring_alert_policy" "vm_instance_down_alert" {
 
 ##Google Monitoring alert policy for the 'VM INSTANCE STARTED AGAIN'
 #Up Alert → condition_threshold (uptime > 0 for 1 minute).
+
+# ABOUT: This alert policy is designed to notify you when a Google Compute Engine (GCE) VM instance has started again. 
+#It uses the uptime metric (compute.googleapis.com/instance/uptime) to detect when the VM is running. 
+#If uptime is greater than 0 for at least 1 minute, the alert triggers.
+
 resource "google_monitoring_alert_policy" "vm_instance_up_recovery" {
   display_name = "VM Instance Up / Recovery Alert"
   combiner     = "OR"
@@ -110,7 +122,7 @@ resource "google_monitoring_alert_policy" "vm_instance_up_recovery" {
       filter          = "resource.type=\"gce_instance\" AND metric.type=\"compute.googleapis.com/instance/uptime\""
       duration        = "60s"
       comparison      = "COMPARISON_GT"
-      threshold_value = 0 # uptime > 0 means VM has started
+      threshold_value = 0
       trigger {
         count = 1
       }
@@ -118,6 +130,13 @@ resource "google_monitoring_alert_policy" "vm_instance_up_recovery" {
         alignment_period   = "60s"
         per_series_aligner = "ALIGN_MEAN"
       }
+    }
+  }
+
+
+  alert_strategy {
+    notification_rate_limit {
+      period = "180s"
     }
   }
 
@@ -130,6 +149,7 @@ resource "google_monitoring_alert_policy" "vm_instance_up_recovery" {
     mime_type = "text/markdown"
   }
 }
+
 
 
 #---------------- CPU Utilization Alert ----------------
