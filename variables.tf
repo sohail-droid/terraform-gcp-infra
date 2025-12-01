@@ -149,3 +149,13 @@ variable "uptime_check_time_period" {
 # data "external" "all_vms" {
 #   program = ["./all_vms.sh", var.project_id]
 # }
+
+variable "duration" {
+  type = string
+  default = "60s"
+
+  validation {
+    condition = contains(["60s","120s","300s"],var.duration)
+    error_message = "value"
+  }
+}
