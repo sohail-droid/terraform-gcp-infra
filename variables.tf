@@ -1,7 +1,7 @@
 variable "project_id" {
   type        = string
   description = "Your project id here"
-  default     = "training-2024-batch"
+  default     = "project-id"
 }
 
 variable "region" {
@@ -55,7 +55,7 @@ variable "network" {
 
 variable "sub_network" {
   type    = string
-  default = "projects/training-2024-batch/regions/us-central1/subnetworks/default"
+  default = "projects/project-id/regions/us-central1/subnetworks/default"
 
 }
 
@@ -63,7 +63,7 @@ variable "sub_network" {
 variable "email_address" {
   type        = list(string)
   description = "List of email who gonna receive the alert mails"
-  default     = ["sohail@wetranscloud.com", "vijayasharma@wetranscloud.com", ]
+  default     = [".com", ".com", ]
 
   #   validation {
   #     condition     = alltrue([for addr in var.email_address : contains(["sohail@wetranscloud.com","vijayasharma@wetranscloud.com","karuppaiah@wetranscloud.com"], addr)])
