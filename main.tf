@@ -85,13 +85,6 @@ resource "google_monitoring_alert_policy" "vm_instance_down_alert" {
     }
   }
 
-
-  alert_strategy {
-    notification_rate_limit {
-      period = "180s"
-    }
-  }
-
   notification_channels = [
     for channel in google_monitoring_notification_channel.email_notification : channel.id
   ]
@@ -130,13 +123,6 @@ resource "google_monitoring_alert_policy" "vm_instance_up_recovery" {
         alignment_period   = "60s"
         per_series_aligner = "ALIGN_MEAN"
       }
-    }
-  }
-
-
-  alert_strategy {
-    notification_rate_limit {
-      period = "180s"
     }
   }
 
