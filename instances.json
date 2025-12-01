@@ -1,0 +1,50 @@
+[
+  {
+    "id": "2765214679685689907",
+    "zone": "https://www.googleapis.com/compute/v1/projects/training-2024-batch/zones/us-central1-a"
+  },
+  {
+    "id": "142076743841802825",
+    "zone": "https://www.googleapis.com/compute/v1/projects/training-2024-batch/zones/us-central1-c"
+  },
+  {
+    "id": "5031600601762560267",
+    "zone": "https://www.googleapis.com/compute/v1/projects/training-2024-batch/zones/us-central1-c"
+  },
+  {
+    "id": "5691493730900702954",
+    "zone": "https://www.googleapis.com/compute/v1/projects/training-2024-batch/zones/us-central1-c"
+  },
+  {
+    "id": "3123596938548803270",
+    "zone": "https://www.googleapis.com/compute/v1/projects/training-2024-batch/zones/us-central1-c"
+  },
+  {
+    "id": "6978644577098944273",
+    "zone": "https://www.googleapis.com/compute/v1/projects/training-2024-batch/zones/us-central1-f"
+  },
+  {
+    "id": "3328610360515606457",
+    "zone": "https://www.googleapis.com/compute/v1/projects/training-2024-batch/zones/asia-south1-b"
+  },
+  {
+    "id": "7486065430923799171",
+    "zone": "https://www.googleapis.com/compute/v1/projects/training-2024-batch/zones/asia-south1-b"
+  },
+  {
+    "id": "9032163261307120286",
+    "zone": "https://www.googleapis.com/compute/v1/projects/training-2024-batch/zones/asia-south1-a"
+  },
+  {
+    "id": "7743193968905251464",
+    "zone": "https://www.googleapis.com/compute/v1/projects/training-2024-batch/zones/asia-south1-c"
+  },
+  {
+    "id": "1634617513160152340",
+    "zone": "https://www.googleapis.com/compute/v1/projects/training-2024-batch/zones/asia-south2-c"
+  },
+  {
+    "id": "8557352376171461830",
+    "zone": "https://www.googleapis.com/compute/v1/projects/training-2024-batch/zones/asia-south2-b"
+  }
+]
