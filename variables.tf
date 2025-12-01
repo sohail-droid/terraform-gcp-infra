@@ -89,7 +89,7 @@ variable "severity" {
   default = "CRITICAL"
   validation {
     condition     = contains(["CRITICAL", "ERROR", "WARNING", "INFO"], var.severity)
-    error_message = "Sorry Not from the severity list"
+    error_message = "Sorry not from the severity list"
   }
 }
 

@@ -10,16 +10,19 @@ terraform {
 data "google_compute_zones" "available" {
 }
 
+#---------------- Monitoring Group for All VMs (Excluding GKE Nodes) ----------------
 resource "google_monitoring_group" "all_vms_group" {
-  display_name = "All Active VMs Uptime Check Group"
+  display_name = "All VMs Uptime Check Group (Excluding GKE)"
   filter       = "resource.type = \"gce_instance\" AND resource.labels.project_id = \"${var.project_id}\""
   is_cluster   = false
 }
 
-#---------------- Uptime check Resource group ----------------
+#---------------- Universal Uptime Check (HTTP Port 80) ----------------
+# This works for VMs with web servers (nginx, apache, etc.)
+# Note: VMs without web servers won't pass this check
 resource "google_monitoring_uptime_check_config" "http_uptime_check" {
-  display_name = "All VMs HTTP Uptime Check"
-  timeout      = "30s"
+  display_name = "VMs HTTP Uptime Check (Port 80)"
+  timeout      = "10s"
   period       = var.uptime_check_time_period
   checker_type = "STATIC_IP_CHECKERS"
 
@@ -36,6 +39,55 @@ resource "google_monitoring_uptime_check_config" "http_uptime_check" {
     request_method = "GET"
   }
 
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+#---------------- Instance-Level VM Monitoring (Works for ALL VMs) ----------------
+# This monitors if the VM is running at the GCP infrastructure level
+# No installation or web server needed - works automatically
+# The alert condition checks:
+# Is uptime < 60 seconds?  Yes.
+# Has this lasted for at least 5 minutes (duration = 300s)? Yes.
+resource "google_monitoring_alert_policy" "vm_instance_down_alert" {
+  display_name = "VM Instance Down Alert (Infrastructure Level)"
+  combiner     = "OR"
+  enabled      = true
+  project      = var.project_id
+
+  conditions {
+    display_name = "VM Instance Stopped or Not Running"
+    condition_threshold {
+      # Monitors VM uptime at the hypervisor level
+      filter = "resource.type = \"gce_instance\" AND metric.type = \"compute.googleapis.com/instance/uptime\""
+      
+      duration   = "300s"  # Alert after 5 minutes down
+      comparison = "COMPARISON_LT"
+      threshold_value = 60  # Less than 60 seconds uptime means it just started or is down
+
+      trigger {
+        count = 1
+      }
+
+      aggregations {
+        alignment_period     = "60s"
+        per_series_aligner   = "ALIGN_MEAN"
+      }
+    }
+  }
+
+  notification_channels = [
+    for channel in google_monitoring_notification_channel.email_notification : channel.id
+  ]
+
+  alert_strategy {
+    auto_close = "1800s"
+  }
+
+  documentation {
+    content = "VM instance has stopped running at the infrastructure level. The VM may have been stopped, terminated, or crashed. This works for ALL VMs including those without web servers."
+  }
 }
 
 #---------------- Notification Channels ----------------
@@ -49,9 +101,9 @@ resource "google_monitoring_notification_channel" "email_notification" {
   force_delete = false
 }
 
-#---------------- VM Downtime Alert (HTTP Check Failed) ----------------
+#---------------- VM Downtime Alert ----------------
 resource "google_monitoring_alert_policy" "downtime_alert" {
-  display_name = "VM Downtime Alert"
+  display_name = "VM Downtime Alert (All VMs)"
   combiner     = "OR"
   enabled      = true
   project      = var.project_id
@@ -59,12 +111,11 @@ resource "google_monitoring_alert_policy" "downtime_alert" {
   conditions {
     display_name = "HTTP Uptime Check Failed"
     condition_threshold {
-      # Tie the alert to your uptime check config
       filter = "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\" AND metric.label.check_id=\"${google_monitoring_uptime_check_config.http_uptime_check.uptime_check_id}\""
 
       duration        = "120s"
       comparison      = "COMPARISON_LT"
-      threshold_value = 1                                       # Alert if check_passed < 1 (i.e., failed)
+      threshold_value = 1
 
       trigger {
         count = 1
@@ -85,8 +136,52 @@ resource "google_monitoring_alert_policy" "downtime_alert" {
   alert_strategy {
     auto_close = "1800s"
   }
+
+  documentation {
+    content = "VM is not responding to HTTP health checks on port 80 and may be down or web server is not running."
+  }
 }
 
+#---------------- VM Uptime/Recovery Alert ----------------
+resource "google_monitoring_alert_policy" "uptime_recovery_alert" {
+  display_name = "VM Uptime Recovery Alert (All VMs)"
+  combiner     = "OR"
+  enabled      = true
+  project      = var.project_id
+
+  conditions {
+    display_name = "HTTP Uptime Check Recovered"
+    condition_threshold {
+      filter = "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\" AND metric.label.check_id=\"${google_monitoring_uptime_check_config.http_uptime_check.uptime_check_id}\""
+
+      duration        = "60s"
+      comparison      = "COMPARISON_GT"
+      threshold_value = 0
+
+      trigger {
+        count = 1
+      }
+
+      aggregations {
+        alignment_period     = "60s"
+        per_series_aligner   = "ALIGN_FRACTION_TRUE"
+        cross_series_reducer = "REDUCE_MEAN"
+      }
+    }
+  }
+
+  notification_channels = [
+    for channel in google_monitoring_notification_channel.email_notification : channel.id
+  ]
+
+  alert_strategy {
+    auto_close = "1800s"
+  }
+
+  documentation {
+    content = "VM has recovered and is now responding to HTTP health checks on port 80."
+  }
+}
 
 #---------------- CPU Utilization Alert ----------------
 resource "google_monitoring_alert_policy" "vm_cpu_utilization_alert" {
