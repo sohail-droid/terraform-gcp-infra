@@ -50,16 +50,29 @@ data "google_compute_zones" "available" {
 ## This monitors if the VM is running at the GCP infrastructure level no installation or web server needed - works automatically
 ## The alert condition checks: Is uptime < 60 seconds?  Yes -> Has this lasted for at more than 5 minutes (duration = 300s)? Yes
 
+
+
+
+#---------------- Notification Type Channels ----------------
+resource "google_monitoring_notification_channel" "email_notification" {
+  for_each     = toset(var.email_address)
+  display_name = "Email Alert Notification for ${each.value}"
+  type         = var.channel_type_mode
+  labels = {
+    email_address = each.value
+  }
+  force_delete = false
+}
+
+## Google Monitoring alert policy for the 'Vm Instance down alert'
+#Down Alert → condition_absent (metric missing for 2 minutes).
 resource "google_monitoring_alert_policy" "vm_instance_down_alert" {
   display_name = "VM Instance Down Alert"
   combiner     = "OR"
-
-  notification_channels = [
-    for channel in google_monitoring_notification_channel.email_notification : channel.id
-  ]
+  enabled      = true
 
   conditions {
-    display_name = "VM Down Condition"
+    display_name = "VM Instance Is down"
 
     condition_absent {
       filter   = "resource.type=\"gce_instance\" AND metric.type=\"compute.googleapis.com/instance/uptime\""
@@ -72,6 +85,10 @@ resource "google_monitoring_alert_policy" "vm_instance_down_alert" {
     }
   }
 
+  notification_channels = [
+    for channel in google_monitoring_notification_channel.email_notification : channel.id
+  ]
+
   documentation {
     content   = "This alert triggers when a VM stops publishing uptime metrics, meaning the VM is STOPPED or unreachable."
     mime_type = "text/markdown"
@@ -79,60 +96,8 @@ resource "google_monitoring_alert_policy" "vm_instance_down_alert" {
 }
 
 
-
-#---------------- Notification Channels ----------------
-resource "google_monitoring_notification_channel" "email_notification" {
-  for_each     = toset(var.email_address)
-  display_name = "Email Alert Notification for ${each.value}"
-  type         = var.channel_type_mode
-  labels = {
-    email_address = each.value
-  }
-  force_delete = false
-}
-
-##---------------- VM Downtime Alert ----------------
-# resource "google_monitoring_alert_policy" "downtime_alert" {
-#   display_name = "VM Downtime Alert (All VMs)"
-#   combiner     = "OR"
-#   enabled      = true
-#   project      = var.project_id
-
-#   conditions {
-#     display_name = "HTTP Uptime Check Failed"
-#     condition_threshold {
-#       filter = "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\" AND metric.label.check_id=\"${google_monitoring_uptime_check_config.http_uptime_check.uptime_check_id}\""
-
-#       duration        = "120s"
-#       comparison      = "COMPARISON_LT"
-#       threshold_value = 1
-
-#       trigger {
-#         count = 1
-#       }
-
-#       aggregations {
-#         alignment_period     = "60s"
-#         per_series_aligner   = "ALIGN_FRACTION_TRUE"
-#         cross_series_reducer = "REDUCE_MEAN"
-#       }
-#     }
-#   }
-
-#   notification_channels = [
-#     for channel in google_monitoring_notification_channel.email_notification : channel.id
-#   ]
-
-#   alert_strategy {
-#     auto_close = "1800s"
-#   }
-
-#   documentation {
-#     content = "VM is not responding to HTTP health checks on port 80 and may be down or web server is not running."
-#   }
-# }
-
-##Google Monitoring alert policy for the VM INSTANCE STARTED AGAIN
+##Google Monitoring alert policy for the 'VM INSTANCE STARTED AGAIN'
+#Up Alert → condition_threshold (uptime > 0 for 1 minute).
 resource "google_monitoring_alert_policy" "vm_instance_up_recovery" {
   display_name = "VM Instance Up / Recovery Alert"
   combiner     = "OR"
@@ -142,7 +107,7 @@ resource "google_monitoring_alert_policy" "vm_instance_up_recovery" {
   conditions {
     display_name = "VM is Running Again"
     condition_threshold {
-      filter          = "metric.type=\"compute.googleapis.com/instance/uptime\" AND resource.type=\"gce_instance\""
+      filter          = "resource.type=\"gce_instance\" AND metric.type=\"compute.googleapis.com/instance/uptime\""
       duration        = "60s"
       comparison      = "COMPARISON_GT"
       threshold_value = 0 # uptime > 0 means VM has started
@@ -160,56 +125,12 @@ resource "google_monitoring_alert_policy" "vm_instance_up_recovery" {
     for channel in google_monitoring_notification_channel.email_notification : channel.id
   ]
 
-  alert_strategy {
-    auto_close = "1800s"
-  }
-
   documentation {
-    content = "VM has started and uptime metric is available again."
+    content   = "VM has started and uptime metric is available again."
+    mime_type = "text/markdown"
   }
 }
 
-
-##---------------- VM Uptime/Recovery Alert ----------------
-# resource "google_monitoring_alert_policy" "uptime_recovery_alert" {
-#   display_name = "VM Uptime Recovery Alert (All VMs)"
-#   combiner     = "OR"
-#   enabled      = true
-#   project      = var.project_id
-
-#   conditions {
-#     display_name = "HTTP Uptime Check Recovered"
-#     condition_threshold {
-#       filter = "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\" AND metric.label.check_id=\"${google_monitoring_uptime_check_config.http_uptime_check.uptime_check_id}\""
-
-#       duration        = "60s"
-#       comparison      = "COMPARISON_GT"
-#       threshold_value = 0
-
-#       trigger {
-#         count = 1
-#       }
-
-#       aggregations {
-#         alignment_period     = "60s"
-#         per_series_aligner   = "ALIGN_FRACTION_TRUE"
-#         cross_series_reducer = "REDUCE_MEAN"
-#       }
-#     }
-#   }
-
-#   notification_channels = [
-#     for channel in google_monitoring_notification_channel.email_notification : channel.id
-#   ]
-
-#   alert_strategy {
-#     auto_close = "1800s"
-#   }
-
-#   documentation {
-#     content = "VM has recovered and is now responding to HTTP health checks on port 80."
-#   }
-# }
 
 #---------------- CPU Utilization Alert ----------------
 resource "google_monitoring_alert_policy" "vm_cpu_utilization_alert" {
