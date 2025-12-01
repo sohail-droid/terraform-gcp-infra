@@ -21,7 +21,7 @@ Monitoring overview:
   - Recovery notifications are sent when resources return to healthy state.
 
 Notification channels:
-- Emails: sohail@wetranscloud.com, vijayasharma@wetranscloud.com
+- Emails: abc.com, xyz.com
 - All alert policies deliver to both addresses. Ensure var.email_address and var.channel_type_mode are set to "email" to enable delivery.
 
 Detailed components (Terraform resources)
