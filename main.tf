@@ -119,7 +119,7 @@ resource "google_monitoring_alert_policy" "vm_instance_up_recovery" {
       filter          = "resource.type=\"gce_instance\" AND metric.type=\"compute.googleapis.com/instance/uptime\""
       duration        = "60s"
       comparison      = "COMPARISON_GT"
-      threshold_value = 0
+      threshold_value = 120
 
       trigger {
         count = 1
@@ -136,8 +136,9 @@ resource "google_monitoring_alert_policy" "vm_instance_up_recovery" {
   ]
 
   alert_strategy {
-    auto_close = "1800s"
-  }
+  auto_close = "1800s"   # 30 minutes
+}
+
 
   documentation {
     content   = "VM has started and uptime metric is available again."
