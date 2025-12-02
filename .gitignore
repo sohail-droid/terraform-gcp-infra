@@ -16,6 +16,7 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+*.json
 
 # Sensitive variable files (if they contain secrets)
 terraform.tfvars
