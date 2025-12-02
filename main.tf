@@ -89,6 +89,13 @@ resource "google_monitoring_alert_policy" "vm_instance_down_alert" {
     for channel in google_monitoring_notification_channel.email_notification : channel.id
   ]
 
+  alert_strategy {
+    auto_close = "1800s"                                #close this alert automatically after 30mins
+    notification_rate_limit {                           #dont send me this alert repeatedly for 5mins
+      period = "300s"
+    }
+  }
+
   documentation {
     content   = "This alert triggers when a VM stops publishing uptime metrics, meaning the VM is STOPPED or unreachable."
     mime_type = "text/markdown"
@@ -116,6 +123,7 @@ resource "google_monitoring_alert_policy" "vm_instance_up_recovery" {
       duration        = "60s"
       comparison      = "COMPARISON_GT"
       threshold_value = 0
+
       trigger {
         count = 1
       }
@@ -129,6 +137,13 @@ resource "google_monitoring_alert_policy" "vm_instance_up_recovery" {
   notification_channels = [
     for channel in google_monitoring_notification_channel.email_notification : channel.id
   ]
+
+  alert_strategy {
+    auto_close = "1800s"
+    notification_rate_limit {
+      period = "300s"
+    }
+  }
 
   documentation {
     content   = "VM has started and uptime metric is available again."
@@ -168,6 +183,9 @@ resource "google_monitoring_alert_policy" "vm_cpu_utilization_alert" {
 
   alert_strategy {
     auto_close = "1800s"
+    notification_rate_limit {
+      period = "300s"
+    }
   }
 }
 
@@ -201,6 +219,9 @@ resource "google_monitoring_alert_policy" "vm_memory_utilization_alert" {
 
   alert_strategy {
     auto_close = "1800s"
+    notification_rate_limit {
+      period = "300s"
+    }
   }
 }
 
@@ -234,5 +255,8 @@ resource "google_monitoring_alert_policy" "vm_disk_utilization_alert" {
 
   alert_strategy {
     auto_close = "1800s"
+    notification_rate_limit {
+      period = "300s"
+    }
   }
 }
