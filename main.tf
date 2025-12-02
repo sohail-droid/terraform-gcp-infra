@@ -91,9 +91,6 @@ resource "google_monitoring_alert_policy" "vm_instance_down_alert" {
 
   alert_strategy {
     auto_close = "1800s"                                #close this alert automatically after 30mins
-    notification_rate_limit {                           #dont send me this alert repeatedly for 5mins
-      period = "300s"
-    }
   }
 
   documentation {
@@ -140,9 +137,6 @@ resource "google_monitoring_alert_policy" "vm_instance_up_recovery" {
 
   alert_strategy {
     auto_close = "1800s"
-    notification_rate_limit {
-      period = "300s"
-    }
   }
 
   documentation {
@@ -183,9 +177,6 @@ resource "google_monitoring_alert_policy" "vm_cpu_utilization_alert" {
 
   alert_strategy {
     auto_close = "1800s"
-    notification_rate_limit {
-      period = "300s"
-    }
   }
 }
 
@@ -219,9 +210,6 @@ resource "google_monitoring_alert_policy" "vm_memory_utilization_alert" {
 
   alert_strategy {
     auto_close = "1800s"
-    notification_rate_limit {
-      period = "300s"
-    }
   }
 }
 
@@ -255,8 +243,5 @@ resource "google_monitoring_alert_policy" "vm_disk_utilization_alert" {
 
   alert_strategy {
     auto_close = "1800s"
-    notification_rate_limit {
-      period = "300s"
-    }
   }
 }
